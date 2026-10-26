@@ -1,0 +1,19 @@
+[Unit]
+Description=GezyView - penghitung dibaca blog Pak Gun
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/gezyview
+# Sesuaikan path bun dengan hasil `which bun` di VPS.
+ExecStart=/usr/local/bin/bun server.ts
+Restart=on-failure
+RestartSec=5
+Environment=PORT=3101
+Environment=DB_PATH=/opt/gezyview/data/gezyview.db
+# Buat salt acak: openssl rand -hex 16
+Environment=GEZYVIEW_SALT=ganti-dengan-salt-acak
+Environment=GEZYVIEW_ORIGINS=https://pakgun.gezytech.web.id
+
+[Install]
+WantedBy=multi-user.target

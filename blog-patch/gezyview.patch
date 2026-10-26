@@ -1,0 +1,36 @@
+# Patch GezyView — penghitung 'dibaca N kali' untuk blog pakgun.gezytech.web.id
+# Terapkan dari root repo blog:  git apply gezyview.patch
+# Patch ini HANYA berisi perubahan GezyView (params [gezyview] + span/skrip single.html).
+# Perubahan lain di working tree (mis. Utterances milik Pak Gun) TIDAK ikut di sini.
+diff --git a/config/_default/params.toml b/config/_default/params.toml
+index 182f659..d732a1b 100644
+--- a/config/_default/params.toml
++++ b/config/_default/params.toml
+@@ -691,3 +691,8 @@ bundle = false
+   # whether to use Polyfill.io to be compatible with older browsers
+   # 是否使用 Polyfill.io 来兼容旧式浏览器
+   polyfill = false
++
++# GezyView — penghitung "dibaca N kali" per artikel (layanan sendiri di VPS).
++# Kosongkan url untuk menonaktifkan tampilan (skrip tidak dirender sama sekali).
++[gezyview]
++  url = "https://view.gezytech.web.id"
+diff --git a/themes/DoIt/layouts/posts/single.html b/themes/DoIt/layouts/posts/single.html
+index 1d07c61..95800a6 100644
+--- a/themes/DoIt/layouts/posts/single.html
++++ b/themes/DoIt/layouts/posts/single.html
+@@ -112,6 +112,14 @@
+                     {{ $readingTime := int (math.Ceil (div (float .WordCount) $reading_speed)) }}
+                     {{ partial "plugin/fontawesome.html" (dict "Style" "regular" "Icon" "clock") }}&nbsp;{{ T "readingTime" $readingTime }}&nbsp;
+                 {{- end -}}
++                {{- /* GezyView: "dibaca N kali" — hanya dirender bila gezyview.url diisi.
++                       Layanan gagal = span tetap tersembunyi, artikel tetap normal. */ -}}
++                {{- with .Site.Params.gezyview.url -}}
++                    <span id="gezyview-count" data-gezyview-url="{{ . }}" data-gezyview-path="{{ $.RelPermalink }}" style="display:none">👁&nbsp;dibaca&nbsp;<span class="gezyview-num"></span>&nbsp;kali</span>&nbsp;
++                    <script>
++                    (function(){var el=document.getElementById('gezyview-count');if(!el)return;var base=el.getAttribute('data-gezyview-url').replace(/\/$/,'');var path=el.getAttribute('data-gezyview-path');var num=el.querySelector('.gezyview-num');var key='gv:'+path;var hit=true;try{hit=!sessionStorage.getItem(key);}catch(e){hit=true;}var ep=hit?'/hit':'/views';var opts={method:hit?'POST':'GET',headers:{}};if(hit){opts.headers['Content-Type']='application/json';opts.body=JSON.stringify({path:path});}else{ep+='?path='+encodeURIComponent(path);}fetch(base+ep,opts).then(function(r){return r.json();}).then(function(d){if(typeof d.views==='number'){num.textContent=d.views.toLocaleString('id-ID');el.style.display='';if(hit){try{sessionStorage.setItem(key,'1');}catch(e){}}}}).catch(function(){});})();
++                    </script>
++                {{- end -}}
+                 {{- $comment := .Scratch.Get "comment" | default dict -}}
+                 {{- /* Visitor Count */ -}}
+                 {{- if $comment.enable | and $comment.valine.enable | and $comment.valine.visitor -}}
